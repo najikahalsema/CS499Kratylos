@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <TMPL_IF NAME="host_ver">
+    <title>Kratylos -- <TMPL_VAR NAME="host_ver"/></title>
+  <TMPL_ELSE>
+	  <title>Kratylos</title>
+  </TMPL_IF>
+  <link rel="icon" href="src/images/kentucky_wildcats.ico" type="image/ico">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS includes -->
+	<link rel="stylesheet" href="src/assets/bootstrap-4.0.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="src/assets/jq-easy_autocomplete-1.3.5/easy-autocomplete.min.css">
+	<link rel="stylesheet" href="src/assets/jq-easy_autocomplete-1.3.5/easy-autocomplete.themes.min.css">
+	<link rel="stylesheet" href="src/assets/datatables-1.10.16/css/dataTables.bootstrap4.min.css"/>
+	<link rel="stylesheet" href="src/assets/node_modules/jquery-confirm/css/jquery-confirm.css">
+	<link rel="stylesheet" href="src/assets/alertifyjs-1.11.11/css/alertify.min.css">
+	<link rel="stylesheet" href="src/assets/local/css/kt_base.css">
+
+	<style>
+		.jconfirm-buttons button { font-size: 11px !important; }
+	</style>
+</head>
+
+<body>
+<!-- Top Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light" id="nav-main">
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent"
+	        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+
+	<div class="collapse navbar-collapse" id="navbarContent">
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item">
+				<a class="nav-link clickable" href="home.cgi">About</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link active clickable" href="project.cgi">Projects</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link clickable" href="499.cgi">499</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link clickable" href="display.cgi">Query</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link clickable" href="upload.cgi">Upload</a>
+			</li>
+		</ul>
+		<img src="src/images/kratylos-half.jpg" class="img-fluid"
+			style="margin:auto;display:inline;width:40%;"
+			alt="Kratylos: from XML to online interactive corpora"/>
+		<ul class="navbar-nav ml-auto">
+			<TMPL_IF NAME="loggedin">
+				<li class="nav-item">
+					<a class="nav-link clickable" href="profile.cgi"
+						data-toggle="tooltip" data-placement='top'
+						title="see profile">
+						<span class="icon-user"></span> <TMPL_VAR NAME="user"/>
+					</a>
+				</li>
+				<li class="nav-item" id="btnLogout">
+					<a class="nav-link clickable" href="#">
+						<span class="icon-unlocked"></span> Log&nbsp;Out
+					</a>
+				</li>
+				<TMPL_IF NAME="isAdmin">
+					<li class="nav-item" id="btnAdminPage">
+						<a class="nav-link clickable" href="#">
+							<span class="icon-cog"></span> Manage
+						</a>
+					</li>
+				</TMPL_IF>
+				<TMPL_ELSE>
+					<li class="nav-item" id="btnSinup">
+						<a class="nav-link clickable" data-toggle="modal" data-target="#modalSignup">
+							<span class="icon-user"></span> Sign&nbsp;Up
+						</a>
+					</li>
+					<li class="nav-item" id="btnLogin">
+						<a class="nav-link clickable" data-toggle="modal" data-target="#modalLogin">
+							<span class="icon-lock"></span> Login
+						</a>
+					</li>
+			</TMPL_IF>
+		</ul>
+	</div>
+</nav>
+
+<!-- Header image -->
+<!-- <TMPL_VAR NAME="mainBanner"/> -->
+
+<!-- main content -->
+<div class="container-fluid main-contents">
+  <div class="row pb-5">
+    <div class="col-md-12">
+	    <!-- notifications -->
+	    <TMPL_IF NAME="errmsg">
+		    <div class="alert alert-danger" role="alert">
+			    <TMPL_VAR NAME="errmsg"/>
+		    </div>
+	    </TMPL_IF>
+
+	    <TMPL_IF NAME="display.myProjects">
+		    <section id="myProjects">
+				<h4>Projects</h4>
+				<span id="selectedProjects" style="visibility:hidden;">
+					Selected projects:
+					<span id="selectedList" class="selectedList"></span>
+					<button class="btn btn-sm btn-outline-danger"
+						onclick="project.clearSelected();">
+						unselect all
+					</button>
+					<button class="btn btn-sm btn-outline-success"
+						onclick="project.search();">
+						search
+					</button>
+				</span>
+				<!-- DataTable -->
+				<!-- CATEGORY SELECTION  -->
+				<div id="tbl-proj_wrapper" class = "dataTables_wrapper container-fluid dt-bootstrap4 no-footer">
+					<div class="row">
+							<div class = "col-sm-12 col-md-6">
+									<div class = "dataTabled_length" id = "tbl-proj_length">
+										<label>
+												<b>Search by Column: </b>
+				<select id="categorySelect" class="form-control form-control-sm">
+						<option value="0">Language</option>
+						<option value="1">Language Code</option>
+						<option value="2">Maintainer</option>
+						<option value="3">Data Type</option>
+						<option value="4">Access</option>
+						<option value="5">Date Created</option>
+						<option value="6">Date Modified</option>
+				</select>
+				</label>
+									</div>
+							</div>
+					</div>
+				</div>
+				<!-- END  -->
+				<table id="tbl-proj" class="table table-striped table-bordered">
+					<!--class="table table-sm table-striped table-bordered">-->
+					<thead>
+					<tr>
+						<th id="language">language</th>
+						<th id="langCode">language-code</th>
+						<th id="owner">maintainer</th>
+						<th id="dataType">data type</th>
+						<th id="sorting">public access</th>
+						<th id="tsUploaded">date created</th>
+						<th id="tsModified">date modified</th>
+					</tr>
+					</thead>
+				</table>
+		    </section>
+	    </TMPL_IF>
+
+	    <TMPL_IF NAME="display.publicProjects">
+		    <section id="publicProjects">
+			    <h4>Public Projects</h4>
+			    <div style="margin-left:15px;">
+				    <ul id="ul-public-projects"> </ul>
+			    </div>
+		    </section>
+	    </TMPL_IF>
+    </div>
+  </div>
+
+	<!-- Project Detail -->
+	<TMPL_IF NAME="display.project_detail">
+		<h1><span id='projectName'></span></h1>
+		<div class="row" id="project_detail" style="display:none;">
+			<div class="col-md-8 pt-4" style="border-right: 1px solid #AAA;">
+				<!-- Project Description -->
+				<div class="row">
+					<div class="col-12 mt-4">
+						<h5>Project Description</h5>
+						<table class="table table-sm table-bordered table-nonfluid"
+						       id="proj_desc" style="font-size:0.9em;">
+							<tbody>
+							<tr>
+								<th scope="row">Language Name:</th>
+								<td id="proj_desc-language"></td>
+							</tr>
+							<tr>
+								<th scope="row">Language Codes:</th>
+								<td id="proj_desc-langCode">
+								<span style="color:dimgray;font-style:italic;">
+									External language codes are not found </span>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">Available Data Types:</th>
+								<td id="proj_desc-dataType"></td>
+							</tr>
+							<tr>
+								<th scope="row">Accessibility</th>
+								<td id="proj_desc-public"></td>
+							</tr>
+							<tr>
+								<th scope="row">Date Created:</th>
+								<td id="proj_desc-dtCreated"></td>
+							</tr>
+							<tr>
+								<th scope="row">Date Last Modified:</th>
+								<td id="proj_desc-dtModified"></td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- Project Provenance and Citation -->
+				<div class="row">
+					<div class="col-12 mt-4" id="proj-prov-cit">
+						<h5>Provenance and citation information</h5>
+						<TMPL_IF NAME="display.control">
+							<label for="taProjProvenance">Provenance</label>
+							<textarea class="form-control" id="taProjProvenance" rows="3"></textarea>
+							<div class="text-muted">
+								Where the data come from.  The provenance is associated with the
+								project, that is, the language-collection pair.
+								This information is presented as part
+								of every query result.
+							</div>
+							<div class="row mt-3">
+								<div class="col-md-4 col-sm-12">
+									<label for="creator">Researcher</label>
+									<input type='text' class="form-control" id="creator" name="creator"
+									       placeholder="Researcher name">
+									<div class="text-muted">
+										The researcher(s) who generated the data, if known.  If
+										generated by an organization, name the organization.  Otherwise,
+										leave this field blank.
+									</div>
+								</div>
+								<div class="col-md-8 col-sm-12">
+									<label for="webSite">Data website</label>
+									<input type='text' class="form-control" id="webSite" name="webSite"
+									       placeholder="Data website">
+									<div class="text-muted">
+										If the data are taken from a web site, list its URL (without the
+										<span style="font-family: Times">http://</span> prefix).
+										Otherwise, leave this field blank.
+									</div>
+								</div>
+							</div>
+							<div class="row mt-1 justify-content-end pr-5">
+								<button id="btnUpdateProv" class="btn btn-info float-right" disabled>
+									Save changes </button>
+							</div>
+							<TMPL_ELSE>
+								<ul>
+									<li> Provenance
+										<div class="panel panel-default" id="provenance-panel" style="margin-bottom:8px;">
+											<div class="panel-body"></div>
+										</div>
+									</li>
+									<li> Researcher name:
+										<span id="proj_cit-creator" style="font-style:italic;">n/a</span>
+									</li>
+									<li> Data website:
+										<span id="proj_cit-webSite" style="font-style:italic;">n/a</span>
+									</li>
+								</ul>
+						</TMPL_IF>
+					</div>
+				</div>
+
+				<!-- Language Geography -->
+				<div class="row mt-4" id="proj-geography">
+					<div class="col-12">
+						<h5>Geography</h5>
+						<div class="row">
+							<div class="col-md-4">
+								<ul>
+									<li style="display:none;">location information of the language is not found</li>
+									<li>Latitude: <span id="proj_geo-lat"></span></li>
+									<li>Longitude: <span id="proj_geo-lng"></span></li>
+									<li>Country (political area): <span id="proj_geo-country"></span></li>
+								</ul>
+							</div>
+							<div class="col-md-8">
+								<script
+								src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyAJLzDHgxft_-85H-3vfKp6MM3jfGUQDcE"></script>
+								<div id="gmap_canvas"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Aside: second main column -->
+			<div class="col-md-4 pt-4">
+				<!-- People -->
+				<section id="proj_member">
+					<h5>People</h5>
+					<TMPL_IF NAME="display.control">
+						<ul style="padding-left: 1em;">
+							<li>Project maintainer:<br/><span id="proj_member-maintainer"></span> </li>
+							<li>Collaborators:<br/><span id="proj_member-collaborators"></span></li>
+						</ul>
+						<TMPL_IF NAME="display.control_maintainer">
+							<div class="form-group form-inline">
+								<input type="text" class="form-control" id="txtSearchUser"
+											 placeholder="Add a collaborator (type an email address)" style="display:inline;">
+								<button id="btnAddCollab" class="btn btn-primary btn-sm">Add</button>
+								<img id="api-wait" src="src/images/ajax-loader-tr.gif" alt="waiting"
+										 style="width:25px; margin-left:20px; display:none;"/>
+							</div>
+						</TMPL_IF>
+					<TMPL_ELSE>
+						<ul style="padding-left: 1em;">
+							<li>project maintainer:<br/><span id="proj_member-maintainer"></span> </li>
+							<li>Collaborators:<br/><span id="proj_member-collaborators"></span></li>
+						</ul>
+					</TMPL_IF>
+				</section>
+
+				<!-- Project settings -->
+				<TMPL_IF NAME="display.control">
+					<section id="proj_setting">
+						<h5>Project Settings</h5>
+						<ul style="padding-left: 1em;">
+							<li>
+								<a href="#" id="btnAccessibility" style="color:red; display:block;">
+									Switch the project accessibility to
+									<span style="font-style:italic;">n/a</span></a>
+								<span class="text-muted">Unauthorized users cannot search private projects.</span>
+							</li><li>
+								<a href="#" id="btnDelete" style="color:red;display:block;">
+									Delete this project </a>
+								<span class="text-muted">
+									All project data will be deleted. Proceed with caution.
+									Only the project maintainer may delete the project.
+									</span>
+							</li>
+						</ul>
+					</section>
+				</TMPL_IF>
+			</div>
+		</div>
+	</TMPL_IF>
+
+	<div class="row" id="project_notfound" style="display:none;width:50%; margin: 50px auto;">
+		<div class="col-12">
+			<div class="alert alert-warning" role="alert">
+				<h4 class="alert-heading">404: Project Not Found</h4>
+				<p>The project may not exist or you may not have permission to access the project.
+					Please verify your URL. You can select a publicly available project from the above.</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!--related collections modal-->
+<div class="modal" id="edit_related_collections" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Editing Project Information (related collections found)</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="row">
+						You can choose to modify only this collection
+						or all the selected collections below.
+					</div>
+					<div class="row">
+						<div class="col-md-4 mx-auto">
+							<button class="btn btn-success">only this collection</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary">Save changes</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+<TMPL_VAR NAME="authModals"/>
+
+<!-- JavaScript includes -->
+<script src="src/assets/jquery-3.1.1/jquery.min.js"></script>
+<script src="src/assets/jquery-3.1.1/jquery-ui.min.js"></script>
+<script src="src/assets/jq-easy_autocomplete-1.3.5/jquery.easy-autocomplete.min.js"></script>
+<script src="src/assets/popper.js-1.14.3/popper.min.js"></script>
+<script src="src/assets/bootstrap-4.0.0/js/bootstrap.min.js"></script>
+<script src="src/assets/local/js/bootstrap-notify.min.js"></script>
+<script src="src/assets/datatables-1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="src/assets/datatables-1.10.16/js/dataTables.bootstrap4.min.js"></script>
+<script src="src/assets/node_modules/jquery-confirm/js/jquery-confirm.js"></script>
+<script src="src/assets/alertifyjs-1.11.11/alertify.js"></script>
+<script src="src/assets/local/js/499_base.js?new"></script>
+
+<script>
+	$(function() {
+		auth.init();
+		project.init(<TMPL_VAR NAME="project.pid"/>);
+		prj.user_role = '<TMPL_VAR NAME="user_role"/>';
+		// Notifier; set defaults
+		$.notifyDefaults({
+			type: 'success',
+			delay: 2000,
+			placement: { from: 'bottom', align: 'right' }
+		});
+	});
+</script>
+</body>
+</html>
+<!-- vim:filetype=html:
+-->
