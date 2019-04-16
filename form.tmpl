@@ -1,0 +1,29 @@
+<!--form.tmpl-->
+<!--Written by: Chris Pratt-->
+<!--This is a proof of concept of querying through different columns-->
+<!--This .tmpl is utilized by form.cgi-->
+
+<!DOCTYPE html>
+<html>
+Querying throughout the database
+<style>
+table, th, td {
+	border: 1px solid black;
+}
+</style>
+</head>
+<body>
+	<form method="POST" action="form.cgi">
+		<select name="column">
+			<option value="language">Language</option>
+			<option value="langCode">Language Code</option>
+			<option value="version">Version</option>
+			<option value="provenance">Provenance</option>
+			<option value="creator">Creator</option>
+			<option value="tags">Tags</option>
+		</select>
+		<input type="text" name = "language">
+		<input type="submit" name = "doSubmit" value="Query">
+	</form>
+</body>
+</html>
